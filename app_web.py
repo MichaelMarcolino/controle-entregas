@@ -7,7 +7,11 @@ app = Flask(__name__)
 
 # ================= CONEXÃO BANCO SUPABASE =================
 def conectar_banco():
-    conn_str = "postgresql://postgres:NF5yvdlJqna0gidO@db.ghqulurcxvsncmvtbrzt.supabase.co:5432/postgres"
+    # Pega a conexão direto das variáveis do Vercel
+    conn_str = os.getenv("DATABASE_URL")
+    if not conn_str:
+        # Para testar localmente, coloque a string aqui temporariamente
+        conn_str = "postgresql://postgres:NF5yvdlJqna0gidO@ghqulurcsvcncmvtbrzt.supabase.co:5432/postgres"
     return psycopg2.connect(conn_str)
 
 # ================= INICIALIZAR TABELAS =================
