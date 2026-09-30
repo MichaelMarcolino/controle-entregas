@@ -1,0 +1,5 @@
+# Arquivos que NÃO subimos
+entregas.db
+__pycache__/
+*.pyc
+*.pyo
