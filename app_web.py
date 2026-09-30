@@ -35,10 +35,16 @@ def adicionar_entrega(desc, valor):
     conn.close()
 
 def excluir_entrega(registro_id):
-    conn = sqlite3.connect("entregas.db")
-    conn.cursor().execute("DELETE FROM entregas WHERE id = ?", (registro_id,))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect("entregas.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM entregas WHERE id = ?", (registro_id,))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Erro ao excluir entrega: {e}")
+        return False
 
 def adicionar_gasto(desc, valor):
     data = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -48,10 +54,16 @@ def adicionar_gasto(desc, valor):
     conn.close()
 
 def excluir_gasto(registro_id):
-    conn = sqlite3.connect("entregas.db")
-    conn.cursor().execute("DELETE FROM gastos WHERE id = ?", (registro_id,))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect("entregas.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM gastos WHERE id = ?", (registro_id,))
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Erro ao excluir gasto: {e}")
+        return False
 
 def listar_entregas(data_inicio=None, data_fim=None):
     conn = sqlite3.connect("entregas.db")
@@ -230,13 +242,17 @@ def cad_gasto():
 
 @app.route('/excluir/entrega/<int:registro_id>')
 def rota_excluir_entrega(registro_id):
-    excluir_entrega(registro_id)
-    return redirect('/historico/entregas')
+    sucesso = excluir_entrega(registro_id)
+    if sucesso:
+        return redirect('/historico/entregas?msg=excluido')
+    return "<script>alert('Erro ao excluir!'); history.back();</script>"
 
 @app.route('/excluir/gasto/<int:registro_id>')
 def rota_excluir_gasto(registro_id):
-    excluir_gasto(registro_id)
-    return redirect('/historico/gastos')
+    sucesso = excluir_gasto(registro_id)
+    if sucesso:
+        return redirect('/historico/gastos?msg=excluido')
+    return "<script>alert('Erro ao excluir!'); history.back();</script>"
 
 @app.route('/historico/entregas')
 def his_entregas():
