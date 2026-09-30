@@ -34,10 +34,22 @@ def adicionar_entrega(desc, valor):
     conn.commit()
     conn.close()
 
+def excluir_entrega(registro_id):
+    conn = sqlite3.connect("entregas.db")
+    conn.cursor().execute("DELETE FROM entregas WHERE id = ?", (registro_id,))
+    conn.commit()
+    conn.close()
+
 def adicionar_gasto(desc, valor):
     data = datetime.now().strftime("%d/%m/%Y %H:%M")
     conn = sqlite3.connect("entregas.db")
     conn.cursor().execute("INSERT INTO gastos VALUES (NULL, ?, ?, ?)", (data, desc, valor))
+    conn.commit()
+    conn.close()
+
+def excluir_gasto(registro_id):
+    conn = sqlite3.connect("entregas.db")
+    conn.cursor().execute("DELETE FROM gastos WHERE id = ?", (registro_id,))
     conn.commit()
     conn.close()
 
@@ -89,10 +101,15 @@ def gerar_html(conteudo):
     <title>Controle de Entregas</title>
     <style>
         * {{ box-sizing: border-box; font-family: Arial, sans-serif; margin: 0; padding: 0; }}
-        body {{ background: #f5f5f5; padding: 20px; max-width: 900px; margin: 0 auto; }}
+        body {{ background: #f5f5f5; padding: 20px; max-width: 500px; margin: 0 auto; }}
         h1 {{ color: #2c3e50; text-align: center; margin-bottom: 30px; }}
-        .menu {{ display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; justify-content: center; }}
-        .menu a {{ padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: 0.3s; }}
+        
+        /* MENU — BOTÕES UM ABAIXO DO OUTRO */
+        .menu {{ display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px; }}
+        .menu a {{ 
+            padding: 15px 20px; border-radius: 8px; text-decoration: none; 
+            font-weight: bold; font-size: 17px; text-align: center; transition: 0.3s;
+        }}
         .btn-verde {{ background: #27ae60; color: white; }}
         .btn-verde:hover {{ background: #219653; }}
         .btn-vermelho {{ background: #e74c3c; color: white; }}
@@ -101,21 +118,37 @@ def gerar_html(conteudo):
         .btn-azul:hover {{ background: #2980b9; }}
         .btn-cinza {{ background: #95a5a6; color: white; }}
         .btn-cinza:hover {{ background: #7f8c8d; }}
+        
         .card {{ background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }}
         h2 {{ color: #2c3e50; margin-bottom: 20px; text-align: center; }}
         input {{ width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }}
         button {{ padding: 12px 25px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; }}
-        .msg {{ padding: 10px; border-radius: 6px; margin: 10px 0; text-align: center; font-weight: bold; }}
+        .msg {{ padding: 12px; border-radius: 6px; margin: 10px 0; text-align: center; font-weight: bold; }}
         .sucesso {{ background: #d4edda; color: #155724; }}
         .erro {{ background: #f8d7da; color: #721c24; }}
+        
         .lista {{ margin-top: 15px; }}
-        .item {{ padding: 12px; border-bottom: 1px solid #eee; }}
+        .item {{ 
+            padding: 15px 12px; border-bottom: 1px solid #eee;
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; flex-wrap: wrap;
+        }}
         .item:last-child {{ border-bottom: none; }}
-        .total {{ margin-top: 15px; font-size: 18px; font-weight: bold; text-align: right; padding: 10px; background: #f0f0f0; border-radius: 6px; }}
+        .item-info {{ flex: 1; min-width: 20px; }}
+        .item-data {{ font-size: 13px; color: #7f8c8d; margin-bottom: 4px; }}
+        .item-desc {{ font-weight: bold; color: #2c3e50; }}
+        .item-valor {{ color: #27ae60; font-weight: bold; margin-top: 4px; }}
+        .btn-excluir {{ 
+            background: #e74c3c; color: white; border: none; padding: 8px 12px; 
+            border-radius: 6px; font-size: 14px; cursor: pointer; width: auto;
+        }}
+        .btn-excluir:hover {{ background: #c0392b; }}
+        
+        .total {{ margin-top: 15px; font-size: 18px; font-weight: bold; text-align: right; padding: 12px; background: #f0f0f0; border-radius: 6px; }}
         .voltar {{ display: inline-block; margin-top: 20px; color: #3498db; text-decoration: none; }}
         .voltar:hover {{ text-decoration: underline; }}
         .linha {{ display: flex; gap: 10px; flex-wrap: wrap; }}
-        .linha input {{ flex: 1; min-width: 150px; }}
+        .linha input {{ flex: 1; min-width: 140px; }}
         .btn-filtrar {{ background: #3498db; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }}
         .btn-tudo {{ background: #95a5a6; color: white; text-decoration: none; display: inline-block; text-align: center; padding: 12px; border-radius: 6px; font-weight: bold; }}
         .saldo-positivo {{ color: #27ae60; font-size: 22px; font-weight: bold; }}
@@ -195,6 +228,16 @@ def cad_gasto():
     """
     return gerar_html(conteudo)
 
+@app.route('/excluir/entrega/<int:registro_id>')
+def rota_excluir_entrega(registro_id):
+    excluir_entrega(registro_id)
+    return redirect('/historico/entregas')
+
+@app.route('/excluir/gasto/<int:registro_id>')
+def rota_excluir_gasto(registro_id):
+    excluir_gasto(registro_id)
+    return redirect('/historico/gastos')
+
 @app.route('/historico/entregas')
 def his_entregas():
     dados = listar_entregas()
@@ -203,10 +246,19 @@ def his_entregas():
     itens = ''
     if dados:
         for d in dados:
-            itens += f'<div class="item"><strong>{d[1]}</strong><br>{d[2]} — R$ {d[3]:.2f}</div>'
+            itens += f'''
+            <div class="item">
+                <div class="item-info">
+                    <div class="item-data">{d[1]}</div>
+                    <div class="item-desc">{d[2]}</div>
+                    <div class="item-valor">R$ {d[3]:.2f}</div>
+                </div>
+                <a href="/excluir/entrega/{d[0]}" class="btn-excluir" onclick="return confirm('Tem certeza?')">🗑️ Excluir</a>
+            </div>
+            '''
         itens += f'<div class="total">💰 Total: R$ {total:.2f}</div>'
     else:
-        itens = '<p style="text-align:center; color:#7f8c8d;">Nenhuma entrega cadastrada</p>'
+        itens = '<p style="text-align:center; color:#7f8c8d; padding:20px;">Nenhuma entrega cadastrada</p>'
     
     conteudo = f"""
     <div class="card">
@@ -225,10 +277,19 @@ def his_gastos():
     itens = ''
     if dados:
         for d in dados:
-            itens += f'<div class="item"><strong>{d[1]}</strong><br>{d[2]} — R$ {d[3]:.2f}</div>'
+            itens += f'''
+            <div class="item">
+                <div class="item-info">
+                    <div class="item-data">{d[1]}</div>
+                    <div class="item-desc">{d[2]}</div>
+                    <div class="item-valor" style="color:#e74c3c;">R$ {d[3]:.2f}</div>
+                </div>
+                <a href="/excluir/gasto/{d[0]}" class="btn-excluir" onclick="return confirm('Tem certeza?')">🗑️ Excluir</a>
+            </div>
+            '''
         itens += f'<div class="total">💸 Total: R$ {total:.2f}</div>'
     else:
-        itens = '<p style="text-align:center; color:#7f8c8d;">Nenhum gasto cadastrado</p>'
+        itens = '<p style="text-align:center; color:#7f8c8d; padding:20px;">Nenhum gasto cadastrado</p>'
     
     conteudo = f"""
     <div class="card">
@@ -281,10 +342,10 @@ def resumo():
             </div>
         </form>
         <p style="margin:20px 0; font-weight:bold; font-size:16px;">Período: {periodo}</p>
-        <div style="font-size:18px; margin:15px 0; padding:10px; background:#e8f5e9; border-radius:6px;">
+        <div style="font-size:18px; margin:15px 0; padding:12px; background:#e8f5e9; border-radius:6px;">
             💰 Total Entregas: <strong style="color:#27ae60;">R$ {te:.2f}</strong>
         </div>
-        <div style="font-size:18px; margin:15px 0; padding:10px; background:#ffebee; border-radius:6px;">
+        <div style="font-size:18px; margin:15px 0; padding:12px; background:#ffebee; border-radius:6px;">
             💸 Total Gastos: <strong style="color:#e74c3c;">R$ {tg:.2f}</strong>
         </div>
         <div style="font-size:22px; margin-top:20px; padding:20px; background:#f0f0f0; border-radius:6px; text-align:center;">
@@ -295,9 +356,8 @@ def resumo():
     """
     return gerar_html(conteudo)
 
-# Inicializar e rodar
+
+# Inicializar banco
 inicializar_banco()
-if __name__ == '__main__':
-    print("🚀 Servidor iniciado!")
-    print("📋 Acesse no navegador: http://127.0.0.1:5000")
-    app.run(host='127.0.0.1', port=5000, debug=True)
+
+app = app
