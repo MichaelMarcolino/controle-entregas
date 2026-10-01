@@ -11,7 +11,7 @@ def conectar_banco():
     conn_str = os.getenv("DATABASE_URL")
 
     if not conn_str:
-        conn_str = "postgresql://postgres:NF5yvdlJqna0gidO@db.ghqulurcxvsncmvtbrzt.supabase.co:5432/postgres"
+        conn_str = "postgresql://postgres:[]@db.ghqulurcxvsncmvtbrzt.supabase.co:5432/postgres"
     
     return psycopg2.connect(conn_str)
 
